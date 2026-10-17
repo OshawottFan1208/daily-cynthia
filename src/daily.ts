@@ -1,5 +1,6 @@
 import { Teams } from '@pkmn/sim'
 import { TeamGenerators } from '@pkmn/randoms'
+import { Dex } from '@pkmn/dex'
 
 Teams.setGeneratorFactory(TeamGenerators)
 
@@ -33,8 +34,23 @@ function hashSeed(str: string): [number, number, number, number] {
   return [(h1 >>> 0) & 0xffff, (h2 >>> 0) & 0xffff, (h3 >>> 0) & 0xffff, (h4 >>> 0) & 0xffff]
 }
 
+const MIN_EACH = 450 // weakest allowed Pokémon (base stat total)
+const MIN_AVG = 500 // minimum team average
+const dex = Dex.forGen(4)
+const bst = (name: string) => {
+  const b = dex.species.get(name).baseStats
+  return b.hp + b.atk + b.def + b.spa + b.spd + b.spe
+}
+
 export function getDailyTeam(dayKey: string): Team {
-  const team = Teams.generate('gen4randombattle', { seed: hashSeed(`${SALT}:${dayKey}`) })
+  let team: Team = []
+  // Re-roll (deterministically) until the team is strong enough
+  for (let attempt = 0; attempt < 200; attempt++) {
+    team = Teams.generate('gen4randombattle', { seed: hashSeed(`${SALT}:${dayKey}:${attempt}`) })
+    const totals = team.map((s: any) => bst(s.species || s.name))
+    const avg = totals.reduce((a, b) => a + b, 0) / totals.length
+    if (Math.min(...totals) >= MIN_EACH && avg >= MIN_AVG) break
+  }
   for (const set of team) set.level = 100
   return team
 }

@@ -24,7 +24,7 @@ const toPaste = (mons: MonSet[]) =>
     )
     .join('\n\n')
 
-const pack = (mons: MonSet[]) => Teams.pack(Teams.import(toPaste(mons)))
+export const pack = (mons: MonSet[]) => Teams.pack(Teams.import(toPaste(mons)))
 
 // Picks a random legal move or switch every time the sim asks for a decision
 
@@ -54,7 +54,11 @@ function moveScore(moveId: string, mon: any, oppTypes: any, oppAbility: string):
   return move.basePower * stab * eff * acc * (stat / 100)
 }
 
-async function cynthiaPlayer(stream: any, oppAbilities: Record<string, string>) {
+export async function cynthiaPlayer(
+  stream: any,
+  oppAbilities: Record<string, string>,
+  oppSide = 'p1'
+) {
   let oppTypes: any = ['Normal']
   let oppAbility = ''
   let pending: any = null
@@ -94,7 +98,7 @@ async function cynthiaPlayer(stream: any, oppAbilities: Record<string, string>) 
 
   for await (const chunk of stream as AsyncIterable<string>) {
     for (const line of chunk.split('\n')) {
-      if (line.startsWith('|switch|p1a:') || line.startsWith('|drag|p1a:')) {
+      if (line.startsWith(`|switch|${oppSide}a:`) || line.startsWith(`|drag|${oppSide}a:`)) {
         const species = line.split('|')[3].split(',')[0]
         oppTypes = dex.species.get(species).types
         oppAbility = oppAbilities[species] ?? ''
