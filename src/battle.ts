@@ -6,7 +6,7 @@ type MonSet = { name: string; item: string; ability: string; moves: string[] }
 
 
 // Cynthia (Platinum). Moves are placeholders; verify against Bulbapedia later.
-const CYNTHIA: MonSet[] = [
+export const CYNTHIA: MonSet[] = [
   { name: 'Spiritomb', item: 'Leftovers', ability: 'Pressure', moves: ['Shadow Ball', 'Dark Pulse', 'Psychic', 'Sucker Punch'] },
   { name: 'Roserade', item: 'Leftovers', ability: 'Natural Cure', moves: ['Sludge Bomb', 'Energy Ball', 'Shadow Ball', 'Sleep Powder'] },
   { name: 'Togekiss', item: 'Leftovers', ability: 'Serene Grace', moves: ['Air Slash', 'Aura Sphere', 'Roost', 'Thunder Wave'] },
