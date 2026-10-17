@@ -77,3 +77,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   .panel { min-width: 150px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
+.info { margin-top: 24px; background: #1e1e30; border-radius: 8px; padding: 8px 14px; }
+.info summary { cursor: pointer; font-weight: bold; }
+.footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #33334f; font-size: 0.75rem; color: #8a8aa5; }

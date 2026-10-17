@@ -13,10 +13,7 @@ export const typeColor = (t: string) => TYPE_COLORS[t] ?? '#777'
 
 // Sprite files are named like the species, lowercase, with only letters, digits and hyphens
 export const spriteUrl = (species: string, back = false) =>
-  `https://play.pokemonshowdown.com/sprites/gen4${back ? '-back' : ''}/${species
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '')}.png`
-
+  `/sprites/gen4${back ? '-back' : ''}/${species.toLowerCase().replace(/[^a-z0-9-]/g, '')}.png`
 // Reads "261/261", "120/261 brn" or "0 fnt"
 export function parseHp(s: string, prevMax = 0) {
   const [frac, tag = ''] = s.split(' ')

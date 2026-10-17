@@ -301,11 +301,27 @@ export default function App() {
         </div>
       )}
 
-      {!running && (
+      {import.meta.env.DEV && !running && (
         <button style={{ marginTop: 24 }} onClick={resetAll}>
           Reset all stats (testing only)
         </button>
       )}
+            <details className="info">
+        <summary>How to play</summary>
+        <ol>
+          <li>Every day, everyone gets the same six random level 100 Pokémon (Generations 1-4).</li>
+          <li>Pick which one leads, then battle Cynthia, the Sinnoh Champion. Her team never changes.</li>
+          <li>You get one official battle a day. Leaving mid-battle counts as a loss. After that, practice runs are unlimited.</li>
+          <li>Copy your spoiler-free result and share it. Wins and streaks are saved in your browser on this device.</li>
+        </ol>
+      </details>
+
+      <footer className="footer">
+        Daily Cynthia is a free, unofficial fan project inspired by Daily Red by amoi.builds. It is not affiliated
+        with or endorsed by Nintendo, Creatures Inc., GAME FREAK inc. or The Pokémon Company. Pokémon, Pokémon
+        character names and sprites are © Nintendo, Creatures Inc. and GAME FREAK inc. Battles run on the Pokémon
+        Showdown simulator.
+      </footer>
     </div>
   )
 }
