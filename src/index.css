@@ -36,21 +36,44 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 .badge { font-size: 0.7rem; padding: 1px 8px; border-radius: 10px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); margin-right: 4px; }
 
+/* Battle arena */
 .arena {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 14px; min-height: 340px;
-  border-radius: 12px; background: linear-gradient(#35507a, #223048 58%, #36553a 58%);
+  position: relative; height: 380px; overflow: hidden; border-radius: 12px;
+  background:
+    radial-gradient(ellipse 120px 40px at 22% 16%, rgba(255, 255, 255, 0.14), transparent 70%),
+    radial-gradient(ellipse 160px 44px at 70% 10%, rgba(255, 255, 255, 0.1), transparent 70%),
+    linear-gradient(#222f5b 0%, #4a6aa8 55%, #86a9d8 100%);
 }
+.arena::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; top: 44%;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 22px, transparent 22px 44px),
+    linear-gradient(#5fa34f, #3e7c3a 55%, #2d5d2c);
+  border-top: 2px solid rgba(255, 255, 255, 0.18);
+}
+.stand { position: absolute; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+.stand .sprite { position: relative; z-index: 2; }
+.platform {
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #e3d29b 0%, #c2a865 55%, #8f7440 100%);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.35);
+}
+.foe-stand { right: 8%; top: 44px; }
+.foe-stand .sprite { width: 140px; height: 140px; margin-bottom: -20px; }
+.foe-stand .platform { width: 170px; height: 40px; }
+.you-stand { left: 6%; bottom: 16px; }
+.you-stand .sprite { width: 190px; height: 190px; margin-bottom: -24px; }
+.you-stand .platform { width: 220px; height: 46px; }
+.foe-panel { position: absolute; z-index: 3; top: 12px; left: 12px; }
+.you-panel { position: absolute; z-index: 3; bottom: 12px; right: 12px; }
+
 .panel { background: rgba(0, 0, 0, 0.6); border-radius: 8px; padding: 8px 12px; min-width: 190px; max-width: 260px; }
 .panel-top { display: flex; justify-content: space-between; gap: 8px; }
 .panel-bottom { display: flex; justify-content: space-between; font-size: 0.8rem; min-height: 1.2em; }
 .status { background: #8a4fff; border-radius: 4px; padding: 0 6px; font-size: 0.7rem; font-weight: bold; }
 .hp-track { height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin: 4px 0; }
 .hp-fill { height: 100%; transition: width 0.6s ease, background 0.6s ease; }
-.sprite { width: 160px; height: 160px; image-rendering: pixelated; object-fit: contain; }
-.foe-panel { grid-column: 1; grid-row: 1; align-self: start; }
-.foe-sprite { grid-column: 2; grid-row: 1; justify-self: end; }
-.you-sprite { grid-column: 1; grid-row: 2; justify-self: start; align-self: end; }
-.you-panel { grid-column: 2; grid-row: 2; justify-self: end; align-self: end; }
+.sprite { width: 160px; height: 160px; image-rendering: pixelated; object-fit: contain; object-position: center bottom; }
 
 .messages {
   background: #0d0d16; border: 1px solid #33334f; border-radius: 8px; margin-top: 8px;
@@ -72,17 +95,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .result pre { margin: 8px 0; font-size: 1.1rem; }
 .hint { color: #9a9ab5; }
 
-@media (max-width: 600px) {
-  .sprite { width: 110px; height: 110px; }
-  .panel { min-width: 150px; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
-}
 .info { margin-top: 24px; background: #1e1e30; border-radius: 8px; padding: 8px 14px; }
 .info summary { cursor: pointer; font-weight: bold; }
 .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #33334f; font-size: 0.75rem; color: #8a8aa5; }
+
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; min-height: 32px; }
 .speed { font-size: 0.85rem; color: #9a9ab5; }
 .speed select { font: inherit; color: inherit; background: #2b2b44; border: 1px solid #44446a; border-radius: 6px; padding: 4px 6px; }
+
 .lab-banner {
   display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
   margin: 0 0 16px; padding: 10px 14px; border-radius: 10px;
@@ -92,3 +112,15 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 .lab-banner:hover { border-color: #8b5cf6; filter: brightness(1.15); }
 .lab-banner .arrow { font-weight: 700; color: #38bdf8; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .arena { height: 330px; }
+  .foe-stand { right: 4%; top: 48px; }
+  .foe-stand .sprite { width: 100px; height: 100px; margin-bottom: -14px; }
+  .foe-stand .platform { width: 120px; height: 30px; }
+  .you-stand { left: 2%; bottom: 14px; }
+  .you-stand .sprite { width: 130px; height: 130px; margin-bottom: -18px; }
+  .you-stand .platform { width: 150px; height: 34px; }
+  .panel { min-width: 150px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}

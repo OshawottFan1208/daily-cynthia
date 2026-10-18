@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Dex } from '@pkmn/dex'
 import { CYNTHIA, startBattle } from './battle'
 import { applyLine, describeLine, emptyView, parseHp, typeColor } from './battleView'
@@ -36,6 +36,33 @@ function Panel({ mon, showNumbers }: { mon: View['p1']; showNumbers?: boolean })
   )
 }
 
+function msUntilMidnight() {
+  const now = new Date()
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  return next.getTime() - now.getTime()
+}
+
+function Countdown({ onNewDay }: { onNewDay: () => void }) {
+  const [left, setLeft] = useState(msUntilMidnight)
+  useEffect(() => {
+    let prev = msUntilMidnight()
+    const id = setInterval(() => {
+      const ms = msUntilMidnight()
+      setLeft(ms)
+      if (ms > prev) onNewDay() // the clock rolled past midnight
+      prev = ms
+    }, 1000)
+    return () => clearInterval(id)
+  }, [onNewDay])
+  const s = Math.floor(left / 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    <span>
+      Next team in {pad(Math.floor(s / 3600))}:{pad(Math.floor((s % 3600) / 60))}:{pad(s % 60)}
+    </span>
+  )
+}
+
 export default function App() {
   const dayKey = todayKey()
   const dailyTeam = useMemo(() => getDailyTeam(dayKey), [dayKey])
@@ -65,10 +92,22 @@ export default function App() {
   const playback = useRef<Playback | null>(null)
   const tally = useRef({ turns: 0, myFaints: 0, herFaints: 0, winner: '' })
   const msgBox = useRef<HTMLDivElement>(null)
+  const [, setTick] = useState(0)
+  const bumpDay = useCallback(() => setTick((t) => t + 1), [])
 
   useEffect(() => {
     if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight
   }, [messages])
+
+  useEffect(() => {
+    if (!(running && official)) return
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [running, official])
 
   function changeSpeed(name: SpeedName) {
     setSpeed(name)
@@ -193,7 +232,9 @@ export default function App() {
         <span className="arrow">Visit the Lab ↗</span>
       </a>
       <h1>Daily Cynthia</h1>
-      <div className="date">Team for {dayKey}</div>
+      <div className="date">
+        Team for {dayKey} · <Countdown onNewDay={bumpDay} />
+      </div>
 
       <div className="stats">
         <div className="stat"><strong>{stats.played}</strong>Played</div>
@@ -240,8 +281,14 @@ export default function App() {
         <>
           <div className="arena">
             <div className="foe-panel"><Panel mon={view.p2} /></div>
-            <div className="foe-sprite">{view.p2 && <Sprite species={view.p2.species} />}</div>
-            <div className="you-sprite">{view.p1 && <Sprite species={view.p1.species} back />}</div>
+            <div className="stand foe-stand">
+              {view.p2 && <Sprite species={view.p2.species} />}
+              <div className="platform" />
+            </div>
+            <div className="stand you-stand">
+              {view.p1 && <Sprite species={view.p1.species} back />}
+              <div className="platform" />
+            </div>
             <div className="you-panel"><Panel mon={view.p1} showNumbers /></div>
           </div>
 
