@@ -321,6 +321,14 @@ export default function App() {
         with or endorsed by Nintendo, Creatures Inc., GAME FREAK inc. or The Pokémon Company. Pokémon, Pokémon
         character names and sprites are © Nintendo, Creatures Inc. and GAME FREAK inc. Battles run on the Pokémon
         Showdown simulator.
+                <div style={{ marginTop: 8 }}>
+          <a
+            href="https://oshawatts-pokemon-lab.oshawattjj.workers.dev"
+            style={{ color: 'inherit', textDecoration: 'underline' }}
+          >
+            More projects at Oshawatt's Pokémon Lab
+          </a>
+        </div>
       </footer>
     </div>
   )
