@@ -4,11 +4,16 @@ import { CYNTHIA, startBattle } from './battle'
 import { applyLine, describeLine, emptyView, parseHp, typeColor } from './battleView'
 import type { View } from './battleView'
 import { getDailyTeam, todayKey } from './daily'
+import { createPlayback } from './playback'
+import type { Playback } from './playback'
 import { computeStats, loadSave, shareText, writeSave } from './storage'
 import type { DayResult, Save } from './storage'
 import { HpBar, Sprite, TypeBadge } from './ui'
 
 const dex = Dex.forGen(4)
+
+const SPEEDS = { Normal: 1, Fast: 0.35, Instant: 0 } as const
+type SpeedName = keyof typeof SPEEDS
 
 function Panel({ mon, showNumbers }: { mon: View['p1']; showNumbers?: boolean }) {
   if (!mon) return <div className="panel">&nbsp;</div>
@@ -55,7 +60,9 @@ export default function App() {
   const [official, setOfficial] = useState(false)
   const [last, setLast] = useState<DayResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const [speed, setSpeed] = useState<SpeedName>('Normal')
   const choose = useRef<(c: string) => void>(() => {})
+  const playback = useRef<Playback | null>(null)
   const tally = useRef({ turns: 0, myFaints: 0, herFaints: 0, winner: '' })
   const msgBox = useRef<HTMLDivElement>(null)
 
@@ -63,7 +70,13 @@ export default function App() {
     if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight
   }, [messages])
 
+  function changeSpeed(name: SpeedName) {
+    setSpeed(name)
+    playback.current?.setSpeed(SPEEDS[name])
+  }
+
   function start(leadIndex: number) {
+    playback.current?.stop()
     const isOfficial = !save.history[dayKey]
     const ordered = [dailyTeam[leadIndex], ...dailyTeam.filter((_, j) => j !== leadIndex)]
 
@@ -81,39 +94,49 @@ export default function App() {
     setFinished(false)
     setRunning(true)
 
+    // Lines are queued and played back one at a time
+    const pb = createPlayback((line) => {
+      const t = tally.current
+      if (line.startsWith('|turn|')) t.turns = Number(line.split('|')[2])
+      else if (line.startsWith('|faint|p1a')) t.myFaints++
+      else if (line.startsWith('|faint|p2a')) t.herFaints++
+      else if (line.startsWith('|win|')) t.winner = line.split('|')[2]
+
+      setView((prev) => applyLine(prev, line))
+      const text = describeLine(line)
+      if (text) setMessages((prev) => [...prev, text])
+    })
+    pb.setSpeed(SPEEDS[speed])
+    playback.current = pb
+
     const battle = startBattle(
       ordered,
-      (line) => {
-        const t = tally.current
-        if (line.startsWith('|turn|')) t.turns = Number(line.split('|')[2])
-        else if (line.startsWith('|faint|p1a')) t.myFaints++
-        else if (line.startsWith('|faint|p2a')) t.herFaints++
-        else if (line.startsWith('|win|')) t.winner = line.split('|')[2]
-
-        setView((prev) => applyLine(prev, line))
-        const text = describeLine(line)
-        if (text) setMessages((prev) => [...prev, text])
+      (line) => pb.push(line),
+      (req) => {
+        // wait a tick so this turn's log lines are queued first, then wait for them to finish playing
+        setTimeout(() => pb.whenIdle(() => setRequest(req)), 0)
       },
-      (req) => setRequest(req),
       () => {
-        const t = tally.current
-        const result: DayResult = {
-          won: t.winner === 'You',
-          turns: t.turns,
-          myFaints: t.myFaints,
-          herFaints: t.herFaints,
-        }
-        setLast(result)
-        if (isOfficial) {
-          setSave((prev) => {
-            const next: Save = { started: null, history: { ...prev.history, [dayKey]: result } }
-            writeSave(next)
-            return next
-          })
-        }
-        setRunning(false)
-        setFinished(true)
-        setRequest(null)
+        pb.whenIdle(() => {
+          const t = tally.current
+          const result: DayResult = {
+            won: t.winner === 'You',
+            turns: t.turns,
+            myFaints: t.myFaints,
+            herFaints: t.herFaints,
+          }
+          setLast(result)
+          if (isOfficial) {
+            setSave((prev) => {
+              const next: Save = { started: null, history: { ...prev.history, [dayKey]: result } }
+              writeSave(next)
+              return next
+            })
+          }
+          setRunning(false)
+          setFinished(true)
+          setRequest(null)
+        })
       }
     )
     choose.current = battle.choose
@@ -177,11 +200,17 @@ export default function App() {
         ))}
       </div>
 
-      {running && (
-        <p>
-          <strong>{official ? 'OFFICIAL BATTLE' : 'PRACTICE RUN'}</strong>
-        </p>
-      )}
+      <div className="toolbar">
+        {running ? <strong>{official ? 'OFFICIAL BATTLE' : 'PRACTICE RUN'}</strong> : <span />}
+        <label className="speed">
+          Battle speed{' '}
+          <select value={speed} onChange={(e) => changeSpeed(e.target.value as SpeedName)}>
+            {Object.keys(SPEEDS).map((k) => (
+              <option key={k} value={k}>{k}</option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {!running && todayResult && (
         <div className="result">
@@ -306,7 +335,8 @@ export default function App() {
           Reset all stats (testing only)
         </button>
       )}
-            <details className="info">
+
+      <details className="info">
         <summary>How to play</summary>
         <ol>
           <li>Every day, everyone gets the same six random level 100 Pokémon (Generations 1-4).</li>
@@ -321,7 +351,7 @@ export default function App() {
         with or endorsed by Nintendo, Creatures Inc., GAME FREAK inc. or The Pokémon Company. Pokémon, Pokémon
         character names and sprites are © Nintendo, Creatures Inc. and GAME FREAK inc. Battles run on the Pokémon
         Showdown simulator.
-                <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 8 }}>
           <a
             href="https://oshawatts-pokemon-lab.oshawattjj.workers.dev"
             style={{ color: 'inherit', textDecoration: 'underline' }}
