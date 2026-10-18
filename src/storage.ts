@@ -56,5 +56,5 @@ export function shareText(day: string, r: DayResult) {
   const mine = '🟩'.repeat(6 - r.myFaints) + '⬛'.repeat(r.myFaints)
   const hers = '🟥'.repeat(6 - r.herFaints) + '⬛'.repeat(r.herFaints)
   const summary = r.turns === 0 ? 'Forfeited' : `${r.turns} turns`
-  return `Daily Cynthia ${day} ${r.won ? '🏆' : '💀'}\n${summary}\nYou     ${mine}\nCynthia ${hers}`
+  return `Daily Cynthia ${day} ${r.won ? '🏆' : '💀'}\n${summary}\nYou     ${mine}\nCynthia ${hers}\n\nPlay today: https://daily-cynthia.oshawattjj.workers.dev`
 }
