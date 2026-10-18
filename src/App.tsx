@@ -52,6 +52,58 @@ function Panel({ mon, showNumbers }: { mon: View['p1']; showNumbers?: boolean })
   )
 }
 
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Flash and shake the sprite standing on this stand
+function playHit(stand: HTMLElement | null) {
+  const sprite = stand?.querySelector('.sprite')
+  if (!sprite || reduceMotion()) return
+  sprite.animate(
+    [
+      { translate: '-50% 0', filter: 'brightness(1)' },
+      { translate: 'calc(-50% - 10px) 0', filter: 'brightness(3) saturate(0)', offset: 0.15 },
+      { translate: 'calc(-50% + 8px) 0', filter: 'brightness(1)', offset: 0.35 },
+      { translate: 'calc(-50% - 6px) 0', filter: 'brightness(2) saturate(0)', offset: 0.55 },
+      { translate: 'calc(-50% + 3px) 0', filter: 'brightness(1)', offset: 0.8 },
+      { translate: '-50% 0', filter: 'brightness(1)' },
+    ],
+    { duration: 420, easing: 'ease-out' }
+  )
+}
+
+// Sink and fade the sprite when it faints (it stays hidden until the next Pokémon replaces it)
+function playFaint(stand: HTMLElement | null) {
+  const sprite = stand?.querySelector('.sprite')
+  if (!sprite || reduceMotion()) return
+  sprite.animate(
+    [
+      { translate: '-50% 0', opacity: 1 },
+      { translate: '-50% 35%', opacity: 0 },
+    ],
+    { duration: 650, easing: 'ease-in', fill: 'forwards' }
+  )
+}
+
+const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
+  left: (i * 37) % 100,
+  delay: ((i * 53) % 20) / 10,
+  duration: 2.4 + ((i * 29) % 15) / 10,
+  color: ['#e5c76b', '#a78bfa', '#38bdf8', '#f472b6'][i % 4],
+}))
+
+function Confetti() {
+  return (
+    <div className="confetti" aria-hidden="true">
+      {CONFETTI.map((c, i) => (
+        <span
+          key={i}
+          style={{ left: `${c.left}%`, background: c.color, animationDelay: `${c.delay}s`, animationDuration: `${c.duration}s` }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function msUntilMidnight() {
   const now = new Date()
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
@@ -108,6 +160,10 @@ export default function App() {
   const playback = useRef<Playback | null>(null)
   const tally = useRef({ turns: 0, myFaints: 0, herFaints: 0, winner: '' })
   const msgBox = useRef<HTMLDivElement>(null)
+  const foeStand = useRef<HTMLDivElement>(null)
+  const youStand = useRef<HTMLDivElement>(null)
+  const [intro, setIntro] = useState(false)
+  const [showEnd, setShowEnd] = useState(false)
   const [, setTick] = useState(0)
   const bumpDay = useCallback(() => setTick((t) => t + 1), [])
 
@@ -147,6 +203,8 @@ export default function App() {
     setMessages([])
     setRequest(null)
     setFinished(false)
+    setShowEnd(false)
+    setIntro(false)
     setRunning(true)
 
     // Lines are queued and played back one at a time
@@ -157,12 +215,20 @@ export default function App() {
       else if (line.startsWith('|faint|p2a')) t.herFaints++
       else if (line.startsWith('|win|')) t.winner = line.split('|')[2]
 
+      if (line.startsWith('|intro|')) setIntro(true)
+      else if (line.startsWith('|-damage|') && !line.includes('[from]')) {
+        playHit(line.split('|')[2].startsWith('p1') ? youStand.current : foeStand.current)
+      } else if (line.startsWith('|faint|')) {
+        playFaint(line.split('|')[2].startsWith('p1') ? youStand.current : foeStand.current)
+      }
+
       setView((prev) => applyLine(prev, line))
       const text = describeLine(line)
       if (text) setMessages((prev) => [...prev, text])
     })
     pb.setSpeed(SPEEDS[speed])
     playback.current = pb
+    if (speed === 'Normal') pb.push('|intro|') // "Cynthia wants to battle!" banner
 
     const battle = startBattle(
       ordered,
@@ -190,6 +256,7 @@ export default function App() {
           }
           setRunning(false)
           setFinished(true)
+          setShowEnd(true)
           setRequest(null)
         })
       }
@@ -204,6 +271,7 @@ export default function App() {
 
   function backToTeam() {
     setFinished(false)
+    setShowEnd(false)
     setView(emptyView)
     setMessages([])
   }
@@ -295,21 +363,54 @@ export default function App() {
 
       {showArena && (
         <>
-              <div className="arena">
+          <div className="arena">
             <div className="stars" />
             <div className="beam" />
             <div className="floor" />
             <div className="champ-tag">Sinnoh Champion · Cynthia</div>
             <div className="foe-panel"><Panel mon={view.p2} /></div>
-            <div className={`stand foe-stand${view.p2?.status ? ` st-${view.p2.status}` : ''}`}>
+            <div ref={foeStand} className={`stand foe-stand${view.p2?.status ? ` st-${view.p2.status}` : ''}`}>
               <div className="platform" />
               {view.p2 && <Sprite key={view.p2.species} species={view.p2.species} px="0.3cqw" />}
             </div>
-            <div className={`stand you-stand${view.p1?.status ? ` st-${view.p1.status}` : ''}`}>
+            <div ref={youStand} className={`stand you-stand${view.p1?.status ? ` st-${view.p1.status}` : ''}`}>
               <div className="platform" />
               {view.p1 && <Sprite key={view.p1.species} species={view.p1.species} back px="0.46cqw" />}
             </div>
             <div className="you-panel"><Panel mon={view.p1} showNumbers /></div>
+
+            {intro && (
+              <div
+                className="intro-card"
+                onAnimationEnd={(e) => {
+                  if (e.target === e.currentTarget) setIntro(false)
+                }}
+              >
+                <div className="intro-kicker">Sinnoh Champion</div>
+                <div className="intro-name">Cynthia</div>
+                <div className="intro-sub">wants to battle!</div>
+              </div>
+            )}
+
+            {finished && showEnd && last && (
+              <div className={`end-card ${last.won ? 'victory' : 'defeat'}`}>
+                {last.won && <Confetti />}
+                <div className="end-kicker">{official ? 'Official battle' : 'Practice run'}</div>
+                <div className="end-title">{last.won ? 'Victory!' : 'Defeated'}</div>
+                <div className="end-sub">
+                  {last.won
+                    ? `You beat Cynthia in ${last.turns} turns with ${6 - last.myFaints} of your Pokémon still standing.`
+                    : `Cynthia wins this round. You knocked out ${last.herFaints} of her 6 Pokémon.`}
+                </div>
+                <div className="end-actions">
+                  {official && todayResult && (
+                    <button onClick={copyResult}>{copied ? 'Copied!' : 'Copy result'}</button>
+                  )}
+                  <button onClick={backToTeam}>Back to team</button>
+                  <button onClick={() => setShowEnd(false)}>View board</button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="messages" ref={msgBox}>
@@ -362,7 +463,7 @@ export default function App() {
             </div>
           )}
 
-          {finished && (
+          {finished && !showEnd && (
             <div className="result">
               <div>
                 {official ? 'Official battle' : 'Practice run'}: {last?.won ? 'You won!' : 'Cynthia won.'}

@@ -211,3 +211,45 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   .panel { min-width: 160px; padding: 8px 10px; }
   .hp-track { height: 14px; }
 }
+
+/* Intro banner and victory / defeat screens */
+.intro-card {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: radial-gradient(circle at 50% 50%, rgba(10, 7, 32, 0.6), rgba(5, 3, 16, 0.94));
+  animation: intro 1.8s ease-in-out forwards;
+}
+.intro-kicker { font-size: 0.8rem; letter-spacing: 0.4em; text-transform: uppercase; color: #a78bfa; animation: slide-in 0.6s ease-out both; }
+.intro-name {
+  font-size: clamp(2rem, 9cqw, 4.5rem); font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #e5c76b; text-shadow: 0 0 24px rgba(229, 199, 107, 0.7); animation: slide-in 0.7s ease-out 0.1s both;
+}
+.intro-sub { font-size: clamp(1rem, 3cqw, 1.5rem); color: #ecebff; animation: slide-in 0.7s ease-out 0.3s both; }
+@keyframes intro { 0% { opacity: 0; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+
+.end-card {
+  position: absolute; inset: 0; z-index: 6; padding: 16px; text-align: center; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(5, 3, 16, 0.82); animation: end-in 0.5s ease-out both;
+}
+.end-card.victory { background: radial-gradient(circle at 50% 45%, rgba(90, 60, 10, 0.55), rgba(5, 3, 16, 0.9)); }
+.end-card.defeat { background: radial-gradient(circle at 50% 45%, rgba(90, 20, 50, 0.5), rgba(5, 3, 16, 0.92)); }
+.end-kicker { position: relative; font-size: 0.75rem; letter-spacing: 0.35em; text-transform: uppercase; color: #a78bfa; }
+.end-title {
+  position: relative; font-size: clamp(2.2rem, 10cqw, 5rem); font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
+  animation: slide-in 0.6s ease-out both;
+}
+.victory .end-title { color: #e5c76b; text-shadow: 0 0 28px rgba(229, 199, 107, 0.8); }
+.defeat .end-title { color: #fb7185; text-shadow: 0 0 24px rgba(251, 113, 133, 0.6); }
+.end-sub { position: relative; max-width: 520px; color: #ecebff; font-size: clamp(0.85rem, 2.2cqw, 1.1rem); }
+.end-actions { position: relative; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+@keyframes end-in { from { opacity: 0; } to { opacity: 1; } }
+
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.confetti span { position: absolute; top: -6%; width: 8px; height: 14px; border-radius: 2px; animation: fall linear infinite; }
+@keyframes fall { from { top: -6%; transform: rotate(0deg); } to { top: 106%; transform: rotate(540deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .stars, .platform, .confetti span, .stand .sprite.loaded { animation: none !important; }
+}

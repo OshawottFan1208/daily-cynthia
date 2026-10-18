@@ -1,5 +1,6 @@
 // Plays battle lines back one at a time with short pauses
 const DELAYS: Record<string, number> = {
+  intro: 1800,
   switch: 800, drag: 800, move: 750, faint: 950,
   '-damage': 650, '-heal': 500, '-supereffective': 600, '-resisted': 600,
   '-immune': 600, '-crit': 600, '-miss': 600, '-fail': 600,
