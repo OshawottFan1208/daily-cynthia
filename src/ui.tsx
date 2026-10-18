@@ -1,16 +1,28 @@
+import { useState } from 'react'
 import { spriteUrl, typeColor } from './battleView'
 
-export function Sprite({ species, back = false, className = 'sprite' }: {
+export function Sprite({
+  species,
+  back = false,
+  className = 'sprite',
+  px,
+}: {
   species: string
   back?: boolean
   className?: string
+  px?: string
 }) {
+  const [dim, setDim] = useState<{ w: number; h: number } | null>(null)
+  // With px set (arena only), draw the sprite at its natural pixel size times a scale
+  const sized = px && dim ? { width: `calc(${dim.w} * ${px})`, height: `calc(${dim.h} * ${px})` } : undefined
   return (
     <img
       key={species + back}
-      className={className}
+      className={`${className}${dim ? ' loaded' : ''}`}
       src={spriteUrl(species, back)}
       alt={species}
+      style={sized}
+      onLoad={(e) => setDim({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
       onError={(e) => {
         e.currentTarget.style.visibility = 'hidden'
       }}

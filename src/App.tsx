@@ -15,6 +15,15 @@ const dex = Dex.forGen(4)
 const SPEEDS = { Normal: 1, Fast: 0.35, Instant: 0 } as const
 type SpeedName = keyof typeof SPEEDS
 
+const STATUS_LABEL: Record<string, string> = {
+  par: 'Paralyzed',
+  psn: 'Poisoned',
+  tox: 'Badly poisoned',
+  brn: 'Burned',
+  slp: 'Asleep',
+  frz: 'Frozen',
+}
+
 function Panel({ mon, showNumbers }: { mon: View['p1']; showNumbers?: boolean }) {
   if (!mon) return <div className="panel">&nbsp;</div>
   return (
@@ -23,9 +32,16 @@ function Panel({ mon, showNumbers }: { mon: View['p1']; showNumbers?: boolean })
         <strong>{mon.species}</strong>
         <span>Lv100</span>
       </div>
-      <HpBar hp={mon.hp} maxHp={mon.maxHp} />
+      <div className="hp-row">
+        <span className="hp-label">HP</span>
+        <HpBar hp={mon.hp} maxHp={mon.maxHp} />
+      </div>
       <div className="panel-bottom">
-        <span>{mon.status && <span className="status">{mon.status.toUpperCase()}</span>}</span>
+        <span>
+          {mon.status && (
+            <span className={`status status-${mon.status}`}>{STATUS_LABEL[mon.status] ?? mon.status.toUpperCase()}</span>
+          )}
+        </span>
         {showNumbers && (
           <span>
             {mon.hp}/{mon.maxHp}
@@ -279,15 +295,19 @@ export default function App() {
 
       {showArena && (
         <>
-          <div className="arena">
+              <div className="arena">
+            <div className="stars" />
+            <div className="beam" />
+            <div className="floor" />
+            <div className="champ-tag">Sinnoh Champion · Cynthia</div>
             <div className="foe-panel"><Panel mon={view.p2} /></div>
-            <div className="stand foe-stand">
-              {view.p2 && <Sprite species={view.p2.species} />}
+            <div className={`stand foe-stand${view.p2?.status ? ` st-${view.p2.status}` : ''}`}>
               <div className="platform" />
+              {view.p2 && <Sprite key={view.p2.species} species={view.p2.species} px="0.3cqw" />}
             </div>
-            <div className="stand you-stand">
-              {view.p1 && <Sprite species={view.p1.species} back />}
+            <div className={`stand you-stand${view.p1?.status ? ` st-${view.p1.status}` : ''}`}>
               <div className="platform" />
+              {view.p1 && <Sprite key={view.p1.species} species={view.p1.species} back px="0.46cqw" />}
             </div>
             <div className="you-panel"><Panel mon={view.p1} showNumbers /></div>
           </div>
